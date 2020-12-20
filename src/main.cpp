@@ -42,11 +42,10 @@ void setup(void) {
   mag.enableAutoRange(true);
 
   /* Initialise the sensor */
-  if (!mag.begin()) {
+  while (!mag.begin()) {
     /* There was a problem detecting the LSM303 ... check your connections */
     Serial.println("Ooops, no LSM303 detected ... Check your wiring!");
-    while (1)
-      ;
+    delay(1000);
   }
 
   /* Display some basic information on this sensor */
