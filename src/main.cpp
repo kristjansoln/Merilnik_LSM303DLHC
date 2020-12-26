@@ -70,5 +70,5 @@ void loop(void) {
   Serial.println("uT");
 
   /* Delay before the next sample */
-  delay(500);
+  delay(100);
 }
