@@ -3,6 +3,7 @@
 #include <Wire.h>
 
 // Function header
+float collectSamplesAndMean(int sampleCount);
 void collectSamples(int sampleCount);
 void displaySensorDetails(void);
 void magInit(void);
@@ -28,16 +29,65 @@ void setup(void)
 
 void loop(void)
 {
-  collectSamples(100);
+  for (int i = 0; i < 10; i++)
+  {
+    collectSamplesAndMean(400);
+    delay(1000);
+  }
   while (1)
     ;
 }
 
 // FUNKCIJE
 
+float collectSamplesAndMean(int sampleCount)
+{
+  uint16_t cycleCounter = 0;
+  float mean = 0;
+  sensors_event_t event;
+
+  //Serial.println("---- begin collectSamplesAndMean ---------------");
+  while (1)
+  {
+    /* Get a new sensor event */
+    mag.getEvent(&event);
+    z = event.magnetic.z;
+
+    // skip first 15 measurements, collect "sampleCount" valid measurements
+    cycleCounter++;
+
+    if (cycleCounter > 15)
+    {
+      // validate
+      if ((z > 0.01) | (z < -0.01))
+      {
+        mean += z;
+      }
+      else
+      {
+        // if invalid, repeat the measurement
+        cycleCounter--;
+      }
+    }
+
+    if (cycleCounter >= (sampleCount + 15))
+    {
+      // divide sum of values by number of values => calculate mean
+      mean = mean / sampleCount;
+      Serial.println("Mean: " + String(mean));
+      //Serial.println("---- end collectSamples -----------------");
+      return mean;
+    }
+
+    // delay - read frequency: 13 Hz - 75 ms
+    //                         200 Hz - 5 ms
+    delay(5);
+  }
+}
+
 void collectSamples(int sampleCount)
 {
-  static uint16_t cycleCounter = 0;
+  uint16_t cycleCounter = 0;
   sensors_event_t event;
 
   Serial.println("---- begin collectSamples ---------------");
@@ -45,8 +95,6 @@ void collectSamples(int sampleCount)
   while (1)
   {
     mag.getEvent(&event);
-    x = event.magnetic.x;
-    y = event.magnetic.y;
     z = event.magnetic.z;
 
     // skip first 15 measurements, collect "sampleCount" valid measurements
@@ -71,8 +119,9 @@ void collectSamples(int sampleCount)
       return;
     }
 
-    // delay - read frequency: 13 Hz
-    delay(75);
+    // delay - read frequency: 13 Hz - 75 ms
+    //                         200 Hz - 5 ms
+    delay(5);
   }
 }
 
@@ -103,6 +152,13 @@ void displaySensorDetails(void)
 
 void magInit(void)
 {
+
+  // Initialise the sensor
+  while (!mag.begin())
+  {
+    Serial.println("Ooops, no LSM303 detected ... Check your wiring!");
+    delay(1000);
+  }
   // Gain
   //mag.enableAutoRange(false);
   //mag.setMagGain(LSM303_MAGGAIN_1_9);
@@ -111,11 +167,5 @@ void magInit(void)
   // Rate
   mag.setMagRate(LSM303_MAGRATE_220);
 
-  // Initialise the sensor
-  while (!mag.begin())
-  {
-    Serial.println("Ooops, no LSM303 detected ... Check your wiring!");
-    delay(1000);
-  }
   return;
 }
