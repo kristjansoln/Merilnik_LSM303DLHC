@@ -2,10 +2,82 @@
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
 
-/* Assign a unique ID to this sensor at the same time */
+// Function header
+void collectSamples(int sampleCount);
+void displaySensorDetails(void);
+void magInit(void);
+
+// LSM303DLHC object declaration
 Adafruit_LSM303DLH_Mag_Unified mag = Adafruit_LSM303DLH_Mag_Unified(12345);
 
-void displaySensorDetails(void) {
+// Global variables declaration
+float x, y, z = 0;
+
+void setup(void)
+{
+
+#ifndef ESP8266
+  while (!Serial)
+    ; // will pause Zero, Leonardo, etc until serial console opens
+#endif
+
+  Serial.begin(9600);
+  magInit();
+  displaySensorDetails();
+}
+
+void loop(void)
+{
+  collectSamples(100);
+  while (1)
+    ;
+}
+
+// FUNKCIJE
+
+void collectSamples(int sampleCount)
+{
+  static uint16_t cycleCounter = 0;
+  sensors_event_t event;
+
+  Serial.println("---- begin collectSamples ---------------");
+  /* Get a new sensor event */
+  while (1)
+  {
+    mag.getEvent(&event);
+    x = event.magnetic.x;
+    y = event.magnetic.y;
+    z = event.magnetic.z;
+
+    // skip first 15 measurements, collect "sampleCount" valid measurements
+    cycleCounter++;
+
+    if (cycleCounter > 15)
+    {
+      // validate
+      if ((z > 0.01) | (z < -0.01))
+      {
+        Serial.println(z);
+      }
+      else
+      {
+        cycleCounter--;
+      }
+    }
+
+    if (cycleCounter > (sampleCount + 15))
+    {
+      Serial.println("---- end collectSamples -----------------");
+      return;
+    }
+
+    // delay - read frequency: 13 Hz
+    delay(75);
+  }
+}
+
+void displaySensorDetails(void)
+{
   sensor_t sensor;
   mag.getSensor(&sensor);
   Serial.println("------------------------------------");
@@ -29,46 +101,21 @@ void displaySensorDetails(void) {
   delay(500);
 }
 
-void setup(void) {
-#ifndef ESP8266
-  while (!Serial)
-    ; // will pause Zero, Leonardo, etc until serial console opens
-#endif
-  Serial.begin(9600);
-  Serial.println("Magnetometer Test");
-  Serial.println("");
-
-  /* Enable auto-gain */
+void magInit(void)
+{
+  // Gain
+  //mag.enableAutoRange(false);
+  //mag.setMagGain(LSM303_MAGGAIN_1_9);
   mag.enableAutoRange(true);
 
-  /* Initialise the sensor */
-  while (!mag.begin()) {
-    /* There was a problem detecting the LSM303 ... check your connections */
+  // Rate
+  mag.setMagRate(LSM303_MAGRATE_220);
+
+  // Initialise the sensor
+  while (!mag.begin())
+  {
     Serial.println("Ooops, no LSM303 detected ... Check your wiring!");
     delay(1000);
   }
-
-  /* Display some basic information on this sensor */
-  displaySensorDetails();
-}
-
-void loop(void) {
-  /* Get a new sensor event */
-  sensors_event_t event;
-  mag.getEvent(&event);
-
-  /* Display the results (magnetic vector values are in micro-Tesla (uT)) */
-  Serial.print("X: ");
-  Serial.print(event.magnetic.x);
-  Serial.print("  ");
-  Serial.print("Y: ");
-  Serial.print(event.magnetic.y);
-  Serial.print("  ");
-  Serial.print("Z: ");
-  Serial.print(event.magnetic.z);
-  Serial.print("  ");
-  Serial.println("uT");
-
-  /* Delay before the next sample */
-  delay(100);
+  return;
 }
