@@ -37,14 +37,18 @@ void loop(void)
 {
   if(digitalRead(buttonPin) == 0)  
     {
+      float totalMean = 0;
       digitalWrite(ledPin, HIGH);
       Serial.println("Button pressed, measuring");
-      for (int i = 0; i < 2; i++)
+      for (int i = 0; i < 5; i++)
       {
-        collectSamplesAndMean(400);
-        delay(1000);
+        totalMean += collectSamplesAndMean(400);
+        delay(500);
       }
+      totalMean = totalMean / 5.0;
+      Serial.println("5 measurements average: " + (String)totalMean);
       digitalWrite(ledPin, LOW);
+      // na roke izračunam odstopanje (približno)
     }
 }
 
