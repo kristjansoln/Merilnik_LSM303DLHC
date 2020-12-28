@@ -14,25 +14,34 @@ Adafruit_LSM303DLH_Mag_Unified mag = Adafruit_LSM303DLH_Mag_Unified(12345);
 
 // Global variables declaration
 float x, y, z, finalWeight, finalMagVal;
+char ledPin = 14;
+char buttonPin = 12;
 
 void setup(void)
 {
-
-#ifndef ESP8266
-  while (!Serial)
-    ; // will pause Zero, Leonardo, etc until serial console opens
-#endif
-
   Serial.begin(9600);
   magInit();
   displaySensorDetails();
+
+  // IO config
+  pinMode(ledPin, OUTPUT);
+  pinMode(buttonPin, INPUT_PULLUP);
 }
 
 void loop(void)
 {
+  static float tare = 0; // tara
+
   finalMagVal = collectSamplesAndMean(400);
-  finalWeight = -154785.2 - 1288.846*pow(finalMagVal, 1) - 4.17052*pow(finalMagVal, 2) - 0.006647351*pow(finalMagVal, 3) - 0.000005248848*pow(finalMagVal, 4) - 1.645575e-9*pow(finalMagVal, 5);
-  Serial.println("Masa: " + (String)finalWeight + "g   B_z: " + (String)finalMagVal + "uT");
+  finalWeight = -154785.2 - 1288.846 * pow(finalMagVal, 1) - 4.17052 * pow(finalMagVal, 2) - 0.006647351 * pow(finalMagVal, 3) - 0.000005248848 * pow(finalMagVal, 4) - 1.645575e-9 * pow(finalMagVal, 5);
+
+  Serial.println("Masa: " + ((String)(finalWeight - tare)) + "g   B_z: " + (String)finalMagVal + "uT    Tara: " + (String)tare);
+
+  if (digitalRead(buttonPin) == 0) // tariranje
+  {
+    tare = finalWeight;
+  }
+
   delay(200);
 }
 
