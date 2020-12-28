@@ -1,6 +1,7 @@
 #include <Adafruit_LSM303DLH_Mag.h>
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
+#include <math.h>
 
 // Function header
 float collectSamplesAndMean(int sampleCount);
@@ -12,7 +13,7 @@ void magInit(void);
 Adafruit_LSM303DLH_Mag_Unified mag = Adafruit_LSM303DLH_Mag_Unified(12345);
 
 // Global variables declaration
-float x, y, z = 0;
+float x, y, z, finalWeight, finalMagVal;
 
 void setup(void)
 {
@@ -29,16 +30,13 @@ void setup(void)
 
 void loop(void)
 {
-  for (int i = 0; i < 10; i++)
-  {
-    collectSamplesAndMean(400);
-    delay(1000);
-  }
-  while (1)
-    ;
+  finalMagVal = collectSamplesAndMean(400);
+  finalWeight = -154785.2 - 1288.846*pow(finalMagVal, 1) - 4.17052*pow(finalMagVal, 2) - 0.006647351*pow(finalMagVal, 3) - 0.000005248848*pow(finalMagVal, 4) - 1.645575e-9*pow(finalMagVal, 5);
+  Serial.println("Masa: " + (String)finalWeight + "g   B_z: " + (String)finalMagVal + "uT");
+  delay(200);
 }
 
-// FUNKCIJE
+//////////////////////////// FUNKCIJE /////////////////////////
 
 float collectSamplesAndMean(int sampleCount)
 {
@@ -74,7 +72,7 @@ float collectSamplesAndMean(int sampleCount)
     {
       // divide sum of values by number of values => calculate mean
       mean = mean / sampleCount;
-      Serial.println("Mean: " + String(mean));
+      //Serial.println("Mean: " + String(mean));
       //Serial.println("---- end collectSamples -----------------");
       return mean;
     }
