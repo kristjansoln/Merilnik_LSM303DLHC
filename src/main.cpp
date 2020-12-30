@@ -4,7 +4,7 @@
 #include <math.h>
 
 // Function header
-float collectSamplesAndMean(int sampleCount);
+double collectSamplesAndMean(int sampleCount);
 void collectSamples(int sampleCount);
 void displaySensorDetails(void);
 void magInit(void);
@@ -13,7 +13,7 @@ void magInit(void);
 Adafruit_LSM303DLH_Mag_Unified mag = Adafruit_LSM303DLH_Mag_Unified(12345);
 
 // Global variables declaration
-float x, y, z, finalWeight, finalMagVal;
+double x, y, z, finalWeight, finalMagVal;
 char ledPin = 14;
 char buttonPin = 12;
 
@@ -30,7 +30,7 @@ void setup(void)
 
 void loop(void)
 {
-  static float tare = 0; // tara
+  static double tare = 0; // tara
 
   finalMagVal = collectSamplesAndMean(400);
   finalWeight = -154785.2 - 1288.846 * pow(finalMagVal, 1) - 4.17052 * pow(finalMagVal, 2) - 0.006647351 * pow(finalMagVal, 3) - 0.000005248848 * pow(finalMagVal, 4) - 1.645575e-9 * pow(finalMagVal, 5);
@@ -47,10 +47,10 @@ void loop(void)
 
 //////////////////////////// FUNKCIJE /////////////////////////
 
-float collectSamplesAndMean(int sampleCount)
+double collectSamplesAndMean(int sampleCount)
 {
   uint16_t cycleCounter = 0;
-  float mean = 0;
+  double mean = 0;
   sensors_event_t event;
 
   //Serial.println("---- begin collectSamplesAndMean ---------------");
